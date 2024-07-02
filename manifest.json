@@ -1,0 +1,32 @@
+{
+
+    "manifest_version" : 3,
+    "name" : "gradescope",
+    "description" : "Base Level Extension", 
+    "version" : "1.0",
+
+    "icons": {
+        "16": "/pictures/icon.png",
+        "32":"/pictures/icon.png",
+        "48":"/pictures/icon.png",
+        "128":"/pictures/icon.png"
+    },
+
+
+    "content_scripts" : [
+
+        {
+            "js": ["scripts/content.js"],
+            "matches": [
+                "*://www.gradescope.com/*"
+            ]
+        }
+    ], 
+
+
+    "background": {
+    "service_worker": "scripts/background.js"
+  }
+
+  
+}
