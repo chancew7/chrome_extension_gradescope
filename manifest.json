@@ -26,7 +26,16 @@
 
     "background": {
     "service_worker": "scripts/background.js"
-  }
+  },
 
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "pictures/*"
+      ],
+      "matches": ["<all_urls>"]
   
+    }
+    ]
+
 }
