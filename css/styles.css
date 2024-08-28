@@ -1,6 +1,36 @@
 
-.highlightedDate{
-    background-color: rgb(200, 171, 29);  /* Or any other color you'd like */
+
+.courseBox {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 10px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.imgContainer {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+}
+
+.gradePicture {
+    width: 80px;
+    height: 80px;
+}
+
+.textContainer {
+    flex-grow: 1;
+    margin-right: 10px;
+    order: 0;
+}
+
+.dueDate{
+    background-color: rgba(228, 202, 73, 0.489);  /* Or any other color you'd like */
     font-weight: bold;
     padding: 1px;
     border-radius: 1px;

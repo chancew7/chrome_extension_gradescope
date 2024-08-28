@@ -9,8 +9,6 @@ async function getDoc(url){
         return doc;
 }
 
-
-
 async function getAverageScore(url){
 
     try {
@@ -136,10 +134,13 @@ async function presentGradePictures(courseBoxesArray){
             const score = await getAverageScore(fullUrl.href);
             const img = document.createElement('img');
             img.src = await determineScorePicture(score, fullUrl.href);
-            img.style.width = '40px';
-            img.style.height = '40px';
+            img.className = 'gradePicture';
 
-            courseBox.appendChild(img);
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'imgContainer';
+            imgContainer.appendChild(img);
+
+            courseBox.appendChild(imgContainer);
 
         }
     }
@@ -154,10 +155,23 @@ async function presentNearestDueDate(courseBoxesArray){
             const fullUrl = new URL(courseBox.href, window.location.origin);
             const date = await getTimeUntilNextAssignmentDue(fullUrl.href);
 
-            const newDiv = document.createElement('div');
-            newDiv.textContent = date;
-            newDiv.className = 'customDiv highlightedDate';
-            courseBox.appendChild(newDiv);
+            const dateParts = date.split(": ");
+            const prefixText = dateParts[0] + ": ";
+            const timeText = dateParts[1];
+
+            const textContainer = document.createElement('div');
+            textContainer.className = 'textContainer';
+
+            const prefixSpan = document.createElement('span');
+            prefixSpan.textContent = prefixText;
+
+            const timeSpan = document.createElement('span');
+            timeSpan.textContent = timeText;
+            timeSpan.className = 'dueDate';
+
+            textContainer.appendChild(prefixSpan);
+            textContainer.appendChild(timeSpan);
+            courseBox.appendChild(textContainer);
         }
     }
 }
