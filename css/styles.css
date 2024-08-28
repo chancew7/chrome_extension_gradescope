@@ -1,0 +1,7 @@
+
+.highlightedDate{
+    background-color: rgb(200, 171, 29);  /* Or any other color you'd like */
+    font-weight: bold;
+    padding: 1px;
+    border-radius: 1px;
+}

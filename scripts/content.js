@@ -1,5 +1,4 @@
 
-console.log("running content");
 
 
 async function getDoc(url){
@@ -9,6 +8,8 @@ async function getDoc(url){
         const doc = parser.parseFromString(text, 'text/html');
         return doc;
 }
+
+
 
 async function getAverageScore(url){
 
@@ -36,12 +37,29 @@ async function getAverageScore(url){
     return null;
 }
 
+async function gradedAssignmentExists(url){
+    const doc = await getDoc(url);
 
-function determineScorePicture(score){
+    const statusElements = doc.querySelectorAll('.submissionStatus');
 
-    console.log("score determined: "+score);
+    for (let i = 0; i < statusElements.length; i++){
+        const statusText = statusElements[i].textContent.trim();
 
-    if (score == 1){
+        if (statusText != "No Submission"){
+            gradedAssignmentExists = true;
+        }
+    }
+    return false;
+}
+
+async function determineScorePicture(score, url){
+
+    const gradedAssignmentExistsVar = await gradedAssignmentExists(url);
+
+    if (!gradedAssignmentExistsVar){
+        return chrome.runtime.getURL("/pictures/start.png");
+    }
+    else if (score == 1){
         return chrome.runtime.getURL("/pictures/drake.png");
     }
     else if (score >= .97){
@@ -54,25 +72,25 @@ function determineScorePicture(score){
         return chrome.runtime.getURL("/pictures/normal.png");
     }
     else if (score >= .85){
-        return "/pictures/fine.png";
+        return chrome.runtime.getURL("/pictures/fine.png");
     }
     else if (score >= .8){
-        return "/pictures/slightlyWeird.png";
+        return chrome.runtime.getURL("/pictures/slightlyWeird.png");
     }
     else if (score >= .75){
-        return "/pictures/verySad.png";
+        return chrome.runtime.getURL("/pictures/verySad.png");
     }
     else if (score >= .7){
-        return "/pictures/superMessedUp.png";
+        return chrome.runtime.getURL("/pictures/superMessedUp.png");
     }
     else if (score >= .65){
-        return "/pictures/scary.png";
+        return chrome.runtime.getURL("/pictures/scary.png");
     }
     else if (score >= .6){
-        return "/pictures/veryWeird.png";
+        return chrome.runtime.getURL("/pictures/veryWeird.png");
     }
     else {
-        return "/pictures/over.png";
+        return chrome.runtime.getURL("/pictures/over.png");
     }
 }
 
@@ -99,9 +117,8 @@ async function getTimeUntilNextAssignmentDue(url){
         const timeUntilDue = nearestDate - now;
         const days = Math.floor(timeUntilDue / (1000 * 60 * 60 * 24));
         const hours = Math.floor((timeUntilDue % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((timeUntilDue % (1000 * 60 * 60)) / (1000 * 60));
 
-        return `Next assignment: ${days} days, ${hours} hours, ${minutes} minutes`;
+        return `Next assignment: ${days} days, ${hours} hours`;
     } else {
         return "No upcoming assignments";
     }
@@ -118,14 +135,16 @@ async function presentGradePictures(courseBoxesArray){
 
             const score = await getAverageScore(fullUrl.href);
             const img = document.createElement('img');
-            img.src = determineScorePicture(score);
+            img.src = await determineScorePicture(score, fullUrl.href);
             img.style.width = '40px';
-            img.style.height = '40px'
+            img.style.height = '40px';
+
             courseBox.appendChild(img);
 
         }
     }
 }
+
 
 async function presentNearestDueDate(courseBoxesArray){
     for (const[index, courseBox] of courseBoxesArray.entries()){
@@ -137,7 +156,7 @@ async function presentNearestDueDate(courseBoxesArray){
 
             const newDiv = document.createElement('div');
             newDiv.textContent = date;
-            newDiv.className = 'customDiv';
+            newDiv.className = 'customDiv highlightedDate';
             courseBox.appendChild(newDiv);
         }
     }
