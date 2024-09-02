@@ -3,10 +3,10 @@
 
 async function getDoc(url){
     const response = await fetch(url);
-        const text = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(text, 'text/html');
-        return doc;
+    const text = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, 'text/html');
+    return doc;
 }
 
 async function getAverageScore(url){
@@ -18,6 +18,7 @@ async function getAverageScore(url){
 
         let totalPts = 0;
         let totalMaxPts = 0;
+        let percentScore = 0;
 
         for (let i = 0; i < scoreElements.length; i++){
             const scoreElement = scoreElements[i];
@@ -27,7 +28,8 @@ async function getAverageScore(url){
             totalPts += pts;
             totalMaxPts += maxPts;
         }
-        return totalPts / totalMaxPts;
+        percentScore = totalPts / totalMaxPts;
+        return percentScore;
     } catch(error){
         console.error("Caught an issue, didn't do much with it: ", error)
     }
@@ -43,10 +45,11 @@ async function gradedAssignmentExists(url){
     for (let i = 0; i < statusElements.length; i++){
         const statusText = statusElements[i].textContent.trim();
 
-        if (statusText != "No Submission"){
-            gradedAssignmentExists = true;
+        if (statusText != "No Submission" && statusText != "Submitted"){
+            return true;
         }
     }
+
     return false;
 }
 
@@ -92,35 +95,67 @@ async function determineScorePicture(score, url){
     }
 }
 
+
+function getTimeDifference(nearestDate){
+
+    const now = new Date();
+    const timeUntilDue = nearestDate - now;
+
+    console.log("time until due: " + timeUntilDue);
+
+    const days = Math.floor(timeUntilDue / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((timeUntilDue % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((timeUntilDue % (1000 * 60 * 60)) / (1000 * 60));
+
+    return [days, hours, minutes]; //maybe fix this
+
+}
+
 async function getTimeUntilNextAssignmentDue(url){
 
     const doc = await getDoc(url);
 
     const dueDateElements = doc.querySelectorAll('.submissionTimeChart--dueDate');
-    const dueDatesArray = Array.from(dueDateElements).map(element => new Date(element.getAttribute('datetime')));
+    const statusElements = doc.querySelectorAll('.submissionStatus');
 
     const now = new Date();
     let nearestDate = null;
     let minDiff = Infinity;
 
-    dueDatesArray.forEach(dueDate => {
-        const diff = dueDate.getTime() - now.getTime(); // Convert to milliseconds and calculate the difference
-        if (diff > 0 && diff < minDiff) {
-            nearestDate = dueDate;
-            minDiff = diff;
-        }
-    });
-   
-    if (nearestDate) {
-        const timeUntilDue = nearestDate - now;
-        const days = Math.floor(timeUntilDue / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((timeUntilDue % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    for (let i = 0; i < dueDateElements.length; i++){
+        if(statusElements[i]){
+            const statusText = statusElements[i].textContent.trim();
 
-        return `Next assignment: ${days} days, ${hours} hours`;
+            if (statusText === "No Submission"){
+                const dueDate = new Date(dueDateElements[i].getAttribute('datetime'));
+                console.log("dueDate: " + dueDate);
+                const diff = dueDate.getTime() - now.getTime();
+
+                if (diff > 0 && diff < minDiff){
+                    nearestDate = dueDate;
+                    minDiff = diff;
+                }
+            }
+        }    
+    }
+
+    if (nearestDate) {
+        const [days, hours, minutes] = getTimeDifference(nearestDate); 
+
+        if (days >= 1) {
+            return `Next assignment: ${days} days, ${hours} hours`;
+        } else {
+            return `Next assignment: ${hours} hours, ${minutes} minutes`;
+        }
     } else {
         return "No upcoming assignments";
     }
+   
+    
 }
+
+
+
 
 
 async function presentGradePictures(courseBoxesArray){
@@ -155,29 +190,42 @@ async function presentNearestDueDate(courseBoxesArray){
             const fullUrl = new URL(courseBox.href, window.location.origin);
             const date = await getTimeUntilNextAssignmentDue(fullUrl.href);
 
-            const dateParts = date.split(": ");
-            const prefixText = dateParts[0] + ": ";
-            const timeText = dateParts[1];
+            if (date != "No upcoming assignments"){
 
-            const textContainer = document.createElement('div');
-            textContainer.className = 'textContainer';
+                const dateParts = date.split(": ");
+                const prefixText = dateParts[0] + ": ";
+                const timeText = dateParts[1];
 
-            const prefixSpan = document.createElement('span');
-            prefixSpan.textContent = prefixText;
+                const textContainer = document.createElement('div');
+                textContainer.className = 'textContainer';
 
-            const timeSpan = document.createElement('span');
-            timeSpan.textContent = timeText;
-            timeSpan.className = 'dueDate';
+                const prefixSpan = document.createElement('span');
+                prefixSpan.textContent = prefixText;
 
-            textContainer.appendChild(prefixSpan);
-            textContainer.appendChild(timeSpan);
-            courseBox.appendChild(textContainer);
+                const timeSpan = document.createElement('span');
+                timeSpan.textContent = timeText;
+                timeSpan.className = 'dueDate';
+
+                textContainer.appendChild(prefixSpan);
+                textContainer.appendChild(timeSpan);
+                courseBox.appendChild(textContainer);
+            }
+            else {
+                const textContainer = document.createElement('div');
+                textContainer.className = 'textContainer';
+
+                const prefixSpan = document.createElement('span');
+                prefixSpan.textContent = date; 
+
+                textContainer.appendChild(prefixSpan);
+                courseBox.appendChild(textContainer);
+            }
         }
     }
 }
 
 
-async function processCourses(){
+async function processRecentCourses(){
 
     const mostRecentTerm = document.querySelector('.courseList--coursesForTerm');
     if (mostRecentTerm) {
@@ -191,5 +239,15 @@ async function processCourses(){
     }
 }
 
-processCourses();
+async function processAllCourses(){
+    const courseBoxes = document.querySelectorAll('.courseBox');
+    const courseBoxesArray = Array.from(courseBoxes).slice(0,-1);
+
+    presentGradePictures(courseBoxesArray);
+    presentNearestDueDate(courseBoxesArray);
+
+}
+
+//processRecentCourses();
+processAllCourses();
 
