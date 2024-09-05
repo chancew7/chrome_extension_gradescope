@@ -1,6 +1,5 @@
 
 
-
 async function getDoc(url){
     const response = await fetch(url);
     const text = await response.text();
@@ -96,66 +95,109 @@ async function determineScorePicture(score, url){
 }
 
 
-function getTimeDifference(nearestDate){
+function getTimeDifference(nearestDate) {
 
     const now = new Date();
     const timeUntilDue = nearestDate - now;
 
     console.log("time until due: " + timeUntilDue);
 
-    const days = Math.floor(timeUntilDue / (1000 * 60 * 60 * 24));
+    const months = Math.floor(timeUntilDue / (1000 * 60 * 60 * 24 * 30));
+    const weeks = Math.floor((timeUntilDue % (1000 * 60 * 60 * 24 * 30)) / (1000 * 60 * 60 * 24 * 7));
+    const days = Math.floor((timeUntilDue % (1000 * 60 * 60 * 24 * 7)) / (1000 * 60 * 60 * 24));
     const hours = Math.floor((timeUntilDue % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((timeUntilDue % (1000 * 60 * 60)) / (1000 * 60));
 
-    return [days, hours, minutes]; //maybe fix this
-
+    return [months, weeks, days, hours, minutes];
 }
 
-async function getTimeUntilNextAssignmentDue(url){
+
+async function getNextDueDate(url){
 
     const doc = await getDoc(url);
 
-    const dueDateElements = doc.querySelectorAll('.submissionTimeChart--dueDate');
-    const statusElements = doc.querySelectorAll('.submissionStatus');
+    const body = doc.querySelector('tbody');
+    const rows = body.querySelectorAll('tr[role="row"]')
+    const rowsArray = Array.from(rows);
 
     const now = new Date();
     let nearestDate = null;
     let minDiff = Infinity;
 
-    for (let i = 0; i < dueDateElements.length; i++){
-        if(statusElements[i]){
-            const statusText = statusElements[i].textContent.trim();
+    for (const row of rowsArray){
 
-            if (statusText === "No Submission"){
-                const dueDate = new Date(dueDateElements[i].getAttribute('datetime'));
-                console.log("dueDate: " + dueDate);
-                const diff = dueDate.getTime() - now.getTime();
+        const submissionStatus = row.querySelector('.submissionStatus--text');
+        let statusText;
+        if (submissionStatus){
+            statusText = submissionStatus.textContent.trim();
+        }
+        if (statusText != 'No Submission'){
+            continue; 
+        } 
 
-                if (diff > 0 && diff < minDiff){
-                    nearestDate = dueDate;
-                    minDiff = diff;
-                }
+        const dueDates = row.querySelectorAll('.submissionTimeChart--dueDate');
+        let standardDueDate;
+        if (dueDates[0]){
+            standardDueDate = new Date(dueDates[0].getAttribute('datetime')); 
+        }
+        else {
+            continue;
+        }
+           
+        let lateDueDateExists = false
+        if (dueDates.length > 1){
+            lateDueDateExists = true;
+        }  
+        if (lateDueDateExists){
+            lateDueDate = new Date(dueDates[1].getAttribute('datetime'));
+        }
+        
+
+        const standardDifference = new Date(standardDueDate.getTime() - now.getTime());
+        let lateDifference;
+        if (lateDueDateExists){
+            lateDifference = new Date(lateDueDate.getTime() - now.getTime());
+        }
+
+        if (standardDifference > 0 && standardDifference < minDiff){
+            minDiff = standardDifference;
+            nearestDate = standardDueDate;
+        }
+        else if (lateDueDateExists){
+            if (standardDifference < 0 && lateDueDateExists && lateDifference > 0 && lateDifference < minDiff){
+                minDiff = lateDifference;
+                nearestDate = lateDueDate;
             }
-        }    
+        }
+        
     }
 
-    if (nearestDate) {
-        const [days, hours, minutes] = getTimeDifference(nearestDate); 
+    if (nearestDate){
+        const [months, weeks, days, hours, minutes] = getTimeDifference(nearestDate); 
 
-        if (days >= 1) {
-            return `Next assignment: ${days} days, ${hours} hours`;
-        } else {
-            return `Next assignment: ${hours} hours, ${minutes} minutes`;
-        }
-    } else {
+        const units = [
+
+            {value: months, name: 'month'},
+            {value: weeks, name: 'week'},
+            {value: days, name: 'day'},
+            {value: hours, name: 'hour'},
+            {value: minutes, name: 'minute'}
+        ];
+
+        const nonZeroUnits = units.filter(unit => unit.value > 0);
+        const significantUnits = nonZeroUnits.slice(0, 2);
+
+        const retString = "Next assignment: " + significantUnits
+            .map(unit => `${unit.value} ${unit.name}${unit.value > 1 ? 's' : ''}`)
+            .join(' ');
+        return retString;
+    }
+    else {
         return "No upcoming assignments";
     }
-   
-    
+
+
 }
-
-
-
 
 
 async function presentGradePictures(courseBoxesArray){
@@ -183,12 +225,13 @@ async function presentGradePictures(courseBoxesArray){
 
 
 async function presentNearestDueDate(courseBoxesArray){
-    for (const[index, courseBox] of courseBoxesArray.entries()){
+
+    for (const courseBox of courseBoxesArray){
 
         if (courseBox.href){
 
             const fullUrl = new URL(courseBox.href, window.location.origin);
-            const date = await getTimeUntilNextAssignmentDue(fullUrl.href);
+            const date = await getNextDueDate(fullUrl.href);
 
             if (date != "No upcoming assignments"){
 
@@ -248,6 +291,13 @@ async function processAllCourses(){
 
 }
 
-//processRecentCourses();
-processAllCourses();
+async function processSingleCourse(){
+    const courseBox = document.querySelector('.courseBox');
+    const courseBoxArray = [courseBox];
+    presentNearestDueDate(courseBoxArray);
+}
+
+//processSingleCourse();
+processRecentCourses();
+//processAllCourses();
 

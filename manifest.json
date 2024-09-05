@@ -18,7 +18,7 @@
         {
             "js": ["scripts/content.js"],
             "matches": 
-            ["*://www.gradescope.com/*"],
+            ["*://www.gradescope.com/"],
             "css": ["css/styles.css"]
         }
     ], 
