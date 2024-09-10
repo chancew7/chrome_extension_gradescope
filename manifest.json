@@ -33,7 +33,7 @@
       "resources": [
         "pictures/*"
       ],
-      "matches": ["<all_urls>"]
+      "matches": ["*://www.gradescope.com/*"]
   
     }
     ]
