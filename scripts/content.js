@@ -322,8 +322,15 @@ async function generateGradeButton(courseBoxesArray){
             button.addEventListener('click', async (event) => {
                 event.stopPropagation();
                 event.preventDefault();
-                const message = await presentGradeScore(courseBox, button);
-                button.innerText = message;
+                if (button.innerText == 'See Grade'){
+                    const message = await presentGradeScore(courseBox, button);
+                    button.innerText = message;
+                }
+                else {
+                    console.log("inner text not see grade");
+                    button.innerText = 'See Grade';
+                }
+                
             });
         }
         else{
