@@ -69,41 +69,49 @@ async function determineScorePicture(score, url){
         gradedAssignmentExistsVar = false;
     }
 
-    if (!gradedAssignmentExistsVar){
-        return chrome.runtime.getURL("/pictures/start.png");
+    try {
+
+        if (!gradedAssignmentExistsVar){
+            return chrome.runtime.getURL("/pictures/start.png");
+        }
+        else if (scoreDecimal == 1){
+            return chrome.runtime.getURL("/pictures/drake.png");
+        }
+        else if (scoreDecimal >= .97){
+            return chrome.runtime.getURL("/pictures/cool.png");
+        }
+        else if (scoreDecimal >= .94){
+            return chrome.runtime.getURL("/pictures/incredible.png");
+        }
+        else if (scoreDecimal >= .9){
+            return chrome.runtime.getURL("/pictures/normal.png");
+        }
+        else if (scoreDecimal >= .85){
+            return chrome.runtime.getURL("/pictures/fine.png");
+        }
+        else if (scoreDecimal >= .8){
+            return chrome.runtime.getURL("/pictures/slightlyWeird.png");
+        }
+        else if (scoreDecimal >= .75){
+            return chrome.runtime.getURL("/pictures/verySad.png");
+        }
+        else if (scoreDecimal >= .7){
+            return chrome.runtime.getURL("/pictures/superMessedUp.png");
+        }
+        else if (scoreDecimal >= .65){
+            return chrome.runtime.getURL("/pictures/scary.png");
+        }
+        else if (scoreDecimal >= .6){
+            return chrome.runtime.getURL("/pictures/veryWeird.png");
+        }
+        else {
+            return chrome.runtime.getURL("/pictures/over.png");
+        }
     }
-    else if (scoreDecimal == 1){
-        return chrome.runtime.getURL("/pictures/drake.png");
-    }
-    else if (scoreDecimal >= .97){
-        return chrome.runtime.getURL("/pictures/cool.png");
-    }
-    else if (scoreDecimal >= .94){
-        return chrome.runtime.getURL("/pictures/incredible.png");
-    }
-    else if (scoreDecimal >= .9){
-        return chrome.runtime.getURL("/pictures/normal.png");
-    }
-    else if (scoreDecimal >= .85){
-        return chrome.runtime.getURL("/pictures/fine.png");
-    }
-    else if (scoreDecimal >= .8){
-        return chrome.runtime.getURL("/pictures/slightlyWeird.png");
-    }
-    else if (scoreDecimal >= .75){
-        return chrome.runtime.getURL("/pictures/verySad.png");
-    }
-    else if (scoreDecimal >= .7){
-        return chrome.runtime.getURL("/pictures/superMessedUp.png");
-    }
-    else if (scoreDecimal >= .65){
-        return chrome.runtime.getURL("/pictures/scary.png");
-    }
-    else if (scoreDecimal >= .6){
-        return chrome.runtime.getURL("/pictures/veryWeird.png");
-    }
-    else {
-        return chrome.runtime.getURL("/pictures/over.png");
+    catch (error){
+        if (! error.message.includes("Extension context invalidated")){
+            console.error("An error occured: " + error);
+        }
     }
 }
 
@@ -225,6 +233,12 @@ async function presentGradePictures(courseBoxesArray){
             const imgContainer = document.createElement('div');
             imgContainer.className = 'imgContainer';
             imgContainer.appendChild(img);
+
+            img.addEventListener('click', (event) => {
+                event.stopPropagation();
+                event.preventDefault();
+                img.style.display = 'none';
+            });
 
             courseBox.appendChild(imgContainer);
 
@@ -371,4 +385,6 @@ async function processSingleCourse(){
 //processSingleCourse();
 //processRecentCourses();
 processAllCourses();
+
+
 

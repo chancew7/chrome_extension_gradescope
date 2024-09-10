@@ -22,21 +22,22 @@
 .gradePicture {
     width: 80px;
     height: 80px;
+    z-index: 5;
 }
 
-.textContainer {
-    flex-grow: 1;
-    margin-right: 10px;
-    order: 0;
+.textContainer{
+    display: flex;
+    flex-wrap: wrap;
+    padding-right: 100px;
     z-index: 15;
 }
-
 .dueDate{
     background-color: rgba(228, 202, 73, 0.489);  /* Or any other color you'd like */
     font-weight: bold;
     padding: 1px;
     border-radius: 1px;
     z-index: 15;
+    display: inline-block;
 }
 
 .courseBox--assignments{
@@ -49,7 +50,7 @@
     right: 10px;
     top: 50%;
     transform: translateY(-50%);
-    background-color: #af4ca5; /* Green background */
+    background-color: #642d72; /* Green background */
     color: white; /* White text */
     padding: 5px 10px;
     border: none;
@@ -59,7 +60,7 @@
   }
   
   .gradeButton:hover {
-    background-color: #be2f4b; /* Darker green on hover */
+    background-color: #975fa5; /* Darker green on hover */
     text-decoration: none;
     cursor: pointer;
   }
