@@ -10,12 +10,13 @@
     position: relative;
 }
 
+
 .imgContainer {
     position: absolute;
     right: 10px;
     top: 50%;
     transform: translateY(-50%);
-    z-index: 10;
+    z-index: 5;
 }
 
 .gradePicture {
@@ -27,6 +28,7 @@
     flex-grow: 1;
     margin-right: 10px;
     order: 0;
+    z-index: 15;
 }
 
 .dueDate{
@@ -34,4 +36,33 @@
     font-weight: bold;
     padding: 1px;
     border-radius: 1px;
+    z-index: 15;
 }
+
+.courseBox--assignments{
+    position: relative;
+    cursor: pointer;
+}
+
+.gradeButton {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #af4ca5; /* Green background */
+    color: white; /* White text */
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  
+  .gradeButton:hover {
+    background-color: #be2f4b; /* Darker green on hover */
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+
+

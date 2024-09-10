@@ -28,7 +28,14 @@ async function getAverageScore(url){
             totalMaxPts += maxPts;
         }
         percentScore = totalPts / totalMaxPts;
-        return percentScore;
+
+        return {
+
+            totalPts: totalPts, 
+            totalMaxPts: totalMaxPts, 
+            percentScore: percentScore
+
+        };
     } catch(error){
         console.error("Caught an issue, didn't do much with it: ", error)
     }
@@ -54,39 +61,45 @@ async function gradedAssignmentExists(url){
 
 async function determineScorePicture(score, url){
 
-    const gradedAssignmentExistsVar = await gradedAssignmentExists(url);
+    let gradedAssignmentExistsVar = await gradedAssignmentExists(url);
+
+    scoreDecimal = score.percentScore;
+    
+    if (score.totalMaxPts == 0){
+        gradedAssignmentExistsVar = false;
+    }
 
     if (!gradedAssignmentExistsVar){
         return chrome.runtime.getURL("/pictures/start.png");
     }
-    else if (score == 1){
+    else if (scoreDecimal == 1){
         return chrome.runtime.getURL("/pictures/drake.png");
     }
-    else if (score >= .97){
+    else if (scoreDecimal >= .97){
         return chrome.runtime.getURL("/pictures/cool.png");
     }
-    else if (score >= .94){
+    else if (scoreDecimal >= .94){
         return chrome.runtime.getURL("/pictures/incredible.png");
     }
-    else if (score >= .9){
+    else if (scoreDecimal >= .9){
         return chrome.runtime.getURL("/pictures/normal.png");
     }
-    else if (score >= .85){
+    else if (scoreDecimal >= .85){
         return chrome.runtime.getURL("/pictures/fine.png");
     }
-    else if (score >= .8){
+    else if (scoreDecimal >= .8){
         return chrome.runtime.getURL("/pictures/slightlyWeird.png");
     }
-    else if (score >= .75){
+    else if (scoreDecimal >= .75){
         return chrome.runtime.getURL("/pictures/verySad.png");
     }
-    else if (score >= .7){
+    else if (scoreDecimal >= .7){
         return chrome.runtime.getURL("/pictures/superMessedUp.png");
     }
-    else if (score >= .65){
+    else if (scoreDecimal >= .65){
         return chrome.runtime.getURL("/pictures/scary.png");
     }
-    else if (score >= .6){
+    else if (scoreDecimal >= .6){
         return chrome.runtime.getURL("/pictures/veryWeird.png");
     }
     else {
@@ -94,13 +107,10 @@ async function determineScorePicture(score, url){
     }
 }
 
-
 function getTimeDifference(nearestDate) {
 
     const now = new Date();
     const timeUntilDue = nearestDate - now;
-
-    console.log("time until due: " + timeUntilDue);
 
     const months = Math.floor(timeUntilDue / (1000 * 60 * 60 * 24 * 30));
     const weeks = Math.floor((timeUntilDue % (1000 * 60 * 60 * 24 * 30)) / (1000 * 60 * 60 * 24 * 7));
@@ -110,7 +120,6 @@ function getTimeDifference(nearestDate) {
 
     return [months, weeks, days, hours, minutes];
 }
-
 
 async function getNextDueDate(url){
 
@@ -199,7 +208,6 @@ async function getNextDueDate(url){
 
 }
 
-
 async function presentGradePictures(courseBoxesArray){
 
     for (const[index, courseBox] of courseBoxesArray.entries()){
@@ -209,6 +217,7 @@ async function presentGradePictures(courseBoxesArray){
             const fullUrl = new URL(courseBox.href, window.location.origin);
 
             const score = await getAverageScore(fullUrl.href);
+
             const img = document.createElement('img');
             img.src = await determineScorePicture(score, fullUrl.href);
             img.className = 'gradePicture';
@@ -222,7 +231,6 @@ async function presentGradePictures(courseBoxesArray){
         }
     }
 }
-
 
 async function presentNearestDueDate(courseBoxesArray){
 
@@ -267,14 +275,67 @@ async function presentNearestDueDate(courseBoxesArray){
     }
 }
 
+async function presentGradeScore(courseBox){
+
+    const fullUrl = new URL(courseBox.href, window.location.origin);
+    let score = await getAverageScore(fullUrl.href);
+
+    if (score.totalMaxPts == 0){
+        score.percentScore = 100;
+    }
+    else{
+        score.percentScore *= 100;
+        score.percentScore = (score.percentScore).toFixed(2);
+    }
+
+    const message = score.totalPts + "/" + score.totalMaxPts + " points = " + score.percentScore + "%";
+    return message;
+}
+
+async function generateGradeButton(courseBoxesArray){
+    
+    for (let courseBox of courseBoxesArray){
+
+        let buttonContainer = courseBox.querySelector('.courseBox--assignments');
+        
+        if (buttonContainer){
+            const button = document.createElement('button');
+            button.innerText = 'See Grade';
+            button.className = 'gradeButton';
+    
+            buttonContainer.appendChild(button);
+    
+            button.addEventListener('click', async (event) => {
+                event.stopPropagation();
+                event.preventDefault();
+                const message = await presentGradeScore(courseBox, button);
+                button.innerText = message;
+            });
+        }
+        else{
+            console.log("no button container");
+        }
+
+        
+    }
+}
+
 
 async function processRecentCourses(){
 
     const mostRecentTerm = document.querySelector('.courseList--coursesForTerm');
     if (mostRecentTerm) {
         const courseBoxes = mostRecentTerm.querySelectorAll('.courseBox');
-        const courseBoxesArray = Array.from(courseBoxes).slice(0,-1);
+        const courseBoxesArray = Array.from(courseBoxes);
 
+        for (let i = courseBoxesArray.length - 1; i >= 0; i--){
+            const courseBox = courseBoxesArray[i];
+            if (!courseBox.querySelector('.courseBox--assignments')){
+                courseBoxesArray.splice(i, 1);
+            }
+        }
+
+        generateGradeButton(courseBoxesArray);
         presentGradePictures(courseBoxesArray);
         presentNearestDueDate(courseBoxesArray);
 
@@ -284,8 +345,16 @@ async function processRecentCourses(){
 
 async function processAllCourses(){
     const courseBoxes = document.querySelectorAll('.courseBox');
-    const courseBoxesArray = Array.from(courseBoxes).slice(0,-1);
+    const courseBoxesArray = Array.from(courseBoxes);
 
+    for (let i = courseBoxesArray.length - 1; i >= 0; i--){
+        const courseBox = courseBoxesArray[i];
+        if (!courseBox.querySelector('.courseBox--assignments')){
+            courseBoxesArray.splice(i, 1);
+        }
+    }
+
+    generateGradeButton(courseBoxesArray);
     presentGradePictures(courseBoxesArray);
     presentNearestDueDate(courseBoxesArray);
 
@@ -297,7 +366,9 @@ async function processSingleCourse(){
     presentNearestDueDate(courseBoxArray);
 }
 
+
+
 //processSingleCourse();
-processRecentCourses();
-//processAllCourses();
+//processRecentCourses();
+processAllCourses();
 
