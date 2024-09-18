@@ -2,7 +2,7 @@
 
     "manifest_version" : 3,
     "name" : "gradescope",
-    "description" : "Base Level Extension", 
+    "description" : "Displays due dates on home page and calculates scores", 
     "version" : "1.0",
 
     "icons": {

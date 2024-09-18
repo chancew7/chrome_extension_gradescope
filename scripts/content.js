@@ -341,7 +341,6 @@ async function generateGradeButton(courseBoxesArray){
     }
 }
 
-
 async function processRecentCourses(){
 
     const mostRecentTerm = document.querySelector('.courseList--coursesForTerm');
@@ -386,7 +385,6 @@ async function processSingleCourse(){
     const courseBoxArray = [courseBox];
     presentNearestDueDate(courseBoxArray);
 }
-
 
 
 //processSingleCourse();
