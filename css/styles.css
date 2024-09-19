@@ -66,4 +66,10 @@
   }
 
 
+  .courseBox--name{
+    white-space: normal;
+    word-wrap: break-word;
+    max-width: calc(100% - 80px);
+  }
+
 

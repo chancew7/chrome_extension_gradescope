@@ -1,20 +1,24 @@
 
 
 async function getDoc(url){
-    const response = await fetch(url);
-    const text = await response.text();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(text, 'text/html');
-    return doc;
+    try{
+        const response = await fetch(url);
+        const text = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, 'text/html');
+        return doc;
+    }
+    catch(error){
+        console.error("Error. Unable to get doc");
+    }
+    return null;
 }
 
 async function getAverageScore(url){
 
-    try {
-
         const doc = await getDoc(url);
         const scoreElements = doc.querySelectorAll('.submissionStatus--score');
-
+    
         let totalPts = 0;
         let totalMaxPts = 0;
         let percentScore = 0;
@@ -36,11 +40,6 @@ async function getAverageScore(url){
             percentScore: percentScore
 
         };
-    } catch(error){
-        console.error("Caught an issue, didn't do much with it: ", error)
-    }
-
-    return null;
 }
 
 async function gradedAssignmentExists(url){
