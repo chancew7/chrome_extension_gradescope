@@ -132,7 +132,7 @@ async function getNextDueDate(url){
 
     const doc = await getDoc(url);
 
-    const body = doc.querySelector('tbody');
+    const body = doc.querySelector('body');
     const rows = body.querySelectorAll('tr[role="row"]')
     const rowsArray = Array.from(rows);
 
@@ -253,6 +253,9 @@ async function presentNearestDueDate(courseBoxesArray){
 
             const fullUrl = new URL(courseBox.href, window.location.origin);
             const date = await getNextDueDate(fullUrl.href);
+            if (date == "No Date"){
+                return;
+            }
 
             if (date != "No upcoming assignments"){
 
